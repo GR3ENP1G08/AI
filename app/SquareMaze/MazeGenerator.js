@@ -21,12 +21,12 @@ const MazeGenerator = ({ height, width, exits, showCreationProcess, extraWallPro
 
   useEffect(() => {
     const newMaze = CreateGrid(width, height).map(row => row.map(cell => ({ ...cell, visited: false })));
-    GenerateMaze(newMaze, exits, SetMaze, setExitCells, extraWallProbability, showCreationProcess);
+    shouldContinueRef.current = true;
+    GenerateMaze(newMaze, exits, SetMaze, setExitCells, extraWallProbability, showCreationProcess, shouldContinueRef);
     setShowButton(false);
     setPath1([]);
     setPath2([]);
     clearSelectedCells();
-    shouldContinueRef.current = false;
   }, [height, width, exits, showCreationProcess, extraWallProbability]);
 
   useEffect(() => {
@@ -109,10 +109,6 @@ const MazeGenerator = ({ height, width, exits, showCreationProcess, extraWallPro
       </Picker>
       <View style={{ opacity: showButton ? 1 : 0 }}>
         <Button title="Show Path" onPress={handleShowPath} />
-      </View>
-      <View style={styles.buttonContainer}>
-        <Button title="Add Wall" onPress={addWall} />
-        <Button title="Remove Wall" onPress={removeWall} />
       </View>
       {maze.map((row, rowIndex) => (
         <View key={rowIndex} style={styles.row}>

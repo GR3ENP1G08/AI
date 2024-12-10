@@ -2,7 +2,7 @@ import { CheckNeighbors } from './CheckNeighbors';
 import RemoveWalls from './RemoveWalls';
 import CreateExits from './CreateExits';
 
-const GenerateMaze = (initialMaze, exits, SetMaze, setExitCells, extraWallProbability = 0, withSteps = false) => {
+const GenerateMaze = (initialMaze, exits, SetMaze, setExitCells, extraWallProbability = 0, withSteps = false, shouldContinueRef) => {
   const stack = [];
   let currentCell = initialMaze[0][0];
   currentCell.visited = true;
@@ -11,6 +11,8 @@ const GenerateMaze = (initialMaze, exits, SetMaze, setExitCells, extraWallProbab
   const GridCopy = initialMaze.map(row => row.map(cell => ({ ...cell })));
 
   const step = () => {
+    if (!shouldContinueRef.current) return;
+
     if (stack.length > 0) {
       const nextCell = CheckNeighbors(currentCell, GridCopy);
 

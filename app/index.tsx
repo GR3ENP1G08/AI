@@ -7,10 +7,9 @@ const NumericInputExample = () => {
   const [height, SetHeight] = useState('10');
   const [width, SetWidth] = useState('10');
   const [generate, SetGenerate] = useState(false);
-  const [mazeParams, SetMazeParams] = useState({ height: 10, width: 10, exits: 0, color: '#FFFFFF'});
+  const [mazeParams, SetMazeParams] = useState({ height: 10, width: 10, exits: 0});
   const [exits, SetExits] = useState(0);
   const [selectedExitButton, SetSelectedExitButton] = useState(0);
-  const [color, SetColor] = useState('#FFFFFF');
   const [mazeType, SetMazeType] = useState('square');
   const [showCreationProcess, SetShowCreationProcess] = useState(false);
   const [showFillSquare, setShowFillSquare] = useState(false);
@@ -26,7 +25,6 @@ const NumericInputExample = () => {
       height: parseInt(height) || 10,
       width: parseInt(width) || 10,
       exits,
-      color,
     });
     SetGenerate(true);
     setShowGrid(true);
@@ -106,14 +104,6 @@ const NumericInputExample = () => {
             </TouchableOpacity>
           </View>
           <View style={styles.buttonContainer}>
-            <Text>Background Color:</Text>
-            <TextInput
-              style={styles.input}
-              value={color}
-              onChangeText={text => SetColor(text)}
-            />
-          </View>
-          <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, mazeType === 'square' && styles.selectedButton]}
               onPress={() => SetMazeType('square')}
@@ -140,9 +130,9 @@ const NumericInputExample = () => {
           {generate && (
             <View style={styles.mazeContainer}>
               {mazeType === 'square' ? (
-                <MazeGenerator height={mazeParams.height} width={mazeParams.width} exits={mazeParams.exits} color={mazeParams.color} showCreationProcess={showCreationProcess}/>
+                <MazeGenerator height={mazeParams.height} width={mazeParams.width} exits={mazeParams.exits} showCreationProcess={showCreationProcess}/>
               ) : (
-                <MazeGenerator height={mazeParams.height} width={mazeParams.width} exits={mazeParams.exits} color={mazeParams.color} showCreationProcess={showCreationProcess} extraWallProbability={0.2} />
+                <MazeGenerator height={mazeParams.height} width={mazeParams.width} exits={mazeParams.exits} showCreationProcess={showCreationProcess} extraWallProbability={0.2} />
               )}
             </View>
           )}

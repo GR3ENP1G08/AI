@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Button } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Button, Picker } from 'react-native';
 import CreateGrid from './CreateGrid';
 import GenerateMaze from './GenerateMaze';
 import findShortestPath from './findShortestPath';
+import findShortestPathDFS from './findShortestPathDFS';
 import WallEditor from './WallEditor';
 
-const MazeGenerator = ({ height, width, exits, color, showCreationProcess, extraWallProbability = 0 }) => {
+const MazeGenerator = ({ height, width, exits, showCreationProcess, extraWallProbability = 0 }) => {
   const [maze, SetMaze] = useState([]);
   const [showButton, setShowButton] = useState(false);
   const [path1, setPath1] = useState([]);
@@ -13,32 +14,63 @@ const MazeGenerator = ({ height, width, exits, color, showCreationProcess, extra
   const [exitCells, setExitCells] = useState([]);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [lastSelectedCell, setLastSelectedCell] = useState(null);
+  const [algorithm, setAlgorithm] = useState('BFS');
   const { selectedCells, toggleCellSelection, addWall, removeWall, clearSelectedCells } = WallEditor(maze, SetMaze);
   const cellSize = Math.min(Dimensions.get('window').width / width, Dimensions.get('window').height / height); 
+  const shouldContinueRef = useRef(true);
 
   useEffect(() => {
-    const newMaze = CreateGrid(width, height);
+    const newMaze = CreateGrid(width, height).map(row => row.map(cell => ({ ...cell, visited: false })));
     GenerateMaze(newMaze, exits, SetMaze, setExitCells, extraWallProbability, showCreationProcess);
     setShowButton(false);
     setPath1([]);
     setPath2([]);
     clearSelectedCells();
+    shouldContinueRef.current = false;
   }, [height, width, exits, showCreationProcess, extraWallProbability]);
 
   useEffect(() => {
-    setShowButton(selectedCells.length === 2 || (selectedCells.length === 1 && exits > 0));
+    setShowButton(selectedCells.length === 2 || (selectedCells.length === 1 && exits > 0) || exits === 2);
   }, [selectedCells, exits]);
 
   const handleShowPath = () => {
+    shouldContinueRef.current = true;
+    const findPath = algorithm === 'BFS' ? findShortestPath : findShortestPathDFS;
+  
     if (selectedCells.length === 2) {
-      const path = findShortestPath(selectedCells[0], selectedCells[1], maze);
-      setPath1(path);
+      findPath(selectedCells[0], selectedCells[1], maze, (path, visited) => {
+        setPath1(path);
+        updateMazeWithVisited(visited);
+      }, () => shouldContinueRef.current);
       setPath2([]);
     } else if (selectedCells.length === 1 && exits > 0) {
-      const paths = exitCells.map(exitCell => findShortestPath(selectedCells[0], exitCell, maze));
-      setPath1(paths[0] || []);
-      setPath2(paths[1] || []);
+      if (exitCells.length > 0) {
+        findPath(selectedCells[0], exitCells[0], maze, (path, visited) => {
+          setPath1(path);
+          updateMazeWithVisited(visited);
+        }, () => shouldContinueRef.current);
+      }
+      if (exitCells.length > 1) {
+        findPath(selectedCells[0], exitCells[1], maze, (path, visited) => {
+          setPath2(path);
+          updateMazeWithVisited(visited);
+        }, () => shouldContinueRef.current);
+      }
+    } else if (exits === 2 && exitCells.length === 2) {
+      findPath(exitCells[0], exitCells[1], maze, (path, visited) => {
+        setPath1(path);
+        updateMazeWithVisited(visited);
+      }, () => shouldContinueRef.current);
+      setPath2([]);
     }
+  };
+
+  const updateMazeWithVisited = (visited) => {
+    const newMaze = maze.map(row => row.map(cell => ({
+      ...cell,
+      visited: visited.has(`${cell.x},${cell.y}`)
+    })));
+    SetMaze(newMaze);
   };
 
   const handleMouseDown = () => {
@@ -67,6 +99,14 @@ const MazeGenerator = ({ height, width, exits, color, showCreationProcess, extra
 
   return (
     <View style={styles.container}>
+      <Picker
+        selectedValue={algorithm}
+        style={{ height: 50, width: 150 }}
+        onValueChange={(itemValue) => setAlgorithm(itemValue)}
+      >
+        <Picker.Item label="BFS" value="BFS" />
+        <Picker.Item label="DFS" value="DFS" />
+      </Picker>
       <View style={{ opacity: showButton ? 1 : 0 }}>
         <Button title="Show Path" onPress={handleShowPath} />
       </View>
@@ -85,6 +125,7 @@ const MazeGenerator = ({ height, width, exits, color, showCreationProcess, extra
             const isPath1 = path1.some(pathCell => pathCell.x === cell.x && pathCell.y === cell.y);
             const isPath2 = path2.some(pathCell => pathCell.x === cell.x && pathCell.y === cell.y);
             const isCrossingPath = isPath1 && isPath2;
+            const isVisited = cell.visited;
 
             return (
               <TouchableOpacity
@@ -98,7 +139,7 @@ const MazeGenerator = ({ height, width, exits, color, showCreationProcess, extra
                     borderLeftWidth: cell.walls[3] ? (isLeftCol ? outerBorderWidth : borderWidth) : 0,
                     width: cellSize,
                     height: cellSize,
-                    backgroundColor: isSelected ? 'pink' : isCrossingPath ? 'yellow' : isPath1 ? 'lightgreen' : isPath2 ? 'lightblue' : color,
+                    backgroundColor: isSelected ? 'pink' : isCrossingPath ? 'yellow' : isPath1 ? (algorithm === 'BFS' ? 'lightgreen' : 'lightcoral') : isPath2 ? 'lightblue' : isVisited ? 'lightgray' : 'white',
                   },
                 ]}
                 onPress={() => toggleCellSelection(cell, () => {
@@ -126,7 +167,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
   },
-  cell: {
+  cell: { 
     justifyContent: 'center',
     alignItems: 'center',
   },

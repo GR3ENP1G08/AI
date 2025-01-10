@@ -7,9 +7,7 @@ const NumericInputExample = () => {
   const [height, SetHeight] = useState('10');
   const [width, SetWidth] = useState('10');
   const [generate, SetGenerate] = useState(false);
-  const [mazeParams, SetMazeParams] = useState({ height: 10, width: 10, exits: 0});
-  const [exits, SetExits] = useState(0);
-  const [selectedExitButton, SetSelectedExitButton] = useState(0);
+  const [mazeParams, SetMazeParams] = useState({ height: 10, width: 10});
   const [mazeType, SetMazeType] = useState('square');
   const [showCreationProcess, SetShowCreationProcess] = useState(false);
   const [showFillSquare, setShowFillSquare] = useState(false);
@@ -24,16 +22,10 @@ const NumericInputExample = () => {
     SetMazeParams({
       height: parseInt(height) || 10,
       width: parseInt(width) || 10,
-      exits,
     });
     SetGenerate(true);
     setShowGrid(true);
     setRegenerate(!regenerate);
-  };
-
-  const HandleExitButtonPress = (value: number) => {
-    SetExits(value);
-    SetSelectedExitButton(value);
   };
 
   const handleBackToMenu = () => {
@@ -85,26 +77,6 @@ const NumericInputExample = () => {
           )}
           <View style={styles.buttonContainer}>
             <TouchableOpacity
-              style={[styles.button, selectedExitButton === 0 && styles.selectedButton]}
-              onPress={() => HandleExitButtonPress(0)}
-            >
-              <Text style={styles.buttonText}>No Exit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, selectedExitButton === 1 && styles.selectedButton]}
-              onPress={() => HandleExitButtonPress(1)}
-            >
-              <Text style={styles.buttonText}>1 Exit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, selectedExitButton === 2 && styles.selectedButton]}
-              onPress={() => HandleExitButtonPress(2)}
-            >
-              <Text style={styles.buttonText}>2 Exits</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
               style={[styles.button, mazeType === 'square' && styles.selectedButton]}
               onPress={() => SetMazeType('square')}
             >
@@ -130,9 +102,9 @@ const NumericInputExample = () => {
           {generate && (
             <View style={styles.mazeContainer}>
               {mazeType === 'square' ? (
-                <MazeGenerator height={mazeParams.height} width={mazeParams.width} exits={mazeParams.exits} showCreationProcess={showCreationProcess}/>
+                <MazeGenerator height={mazeParams.height} width={mazeParams.width} showCreationProcess={showCreationProcess}/>
               ) : (
-                <MazeGenerator height={mazeParams.height} width={mazeParams.width} exits={mazeParams.exits} showCreationProcess={showCreationProcess} extraWallProbability={0.2} />
+                <MazeGenerator height={mazeParams.height} width={mazeParams.width} showCreationProcess={showCreationProcess} extraWallProbability={0.2} />
               )}
             </View>
           )}

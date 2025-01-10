@@ -1,14 +1,14 @@
 import { CheckNeighbors } from './CheckNeighbors';
 import RemoveWalls from './RemoveWalls';
-import CreateExits from './CreateExits';
 
-const GenerateMaze = (initialMaze, exits, SetMaze, setExitCells, extraWallProbability = 0, withSteps = false, shouldContinueRef) => {
+const GenerateMaze = (initialMaze, SetMaze, extraWallProbability = 0, withSteps = false, shouldContinueRef, setGenerationTime) => {
   const stack = [];
   let currentCell = initialMaze[0][0];
   currentCell.visited = true;
   stack.push(currentCell);
 
   const GridCopy = initialMaze.map(row => row.map(cell => ({ ...cell })));
+  const startTime = Date.now();
 
   const step = () => {
     if (!shouldContinueRef.current) return;
@@ -45,8 +45,9 @@ const GenerateMaze = (initialMaze, exits, SetMaze, setExitCells, extraWallProbab
         step();
       }
     } else {
-      CreateExits(GridCopy, exits, setExitCells);
       SetMaze(GridCopy);
+      const endTime = Date.now();
+      setGenerationTime(endTime - startTime);
     }
   };
 

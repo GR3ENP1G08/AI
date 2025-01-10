@@ -1,10 +1,11 @@
 import getNeighbors from './getNeighbors';
 
-const findShortestPath = (start, end, maze, updateMaze, shouldContinue) => {
+const findShortestPath = (start, end, maze, updateMaze, shouldContinue, setPathTime) => {
   return new Promise((resolve) => {
     const queue = [[start]];
     const visited = new Set();
     visited.add(`${start.x},${start.y}`);
+    const startTime = Date.now();
 
     const step = () => {
       if (!shouldContinue()) {
@@ -18,6 +19,8 @@ const findShortestPath = (start, end, maze, updateMaze, shouldContinue) => {
 
         if (cell.x === end.x && cell.y === end.y) {
           updateMaze(path, visited);
+          const endTime = Date.now();
+          setPathTime(endTime - startTime);
           resolve(path);
           return;
         }

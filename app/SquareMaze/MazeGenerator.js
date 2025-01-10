@@ -1,67 +1,64 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Button, Picker } from 'react-native';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Button, Picker, Text } from 'react-native';
 import CreateGrid from './CreateGrid';
 import GenerateMaze from './GenerateMaze';
 import findShortestPath from './findShortestPath';
 import findShortestPathDFS from './findShortestPathDFS';
 import WallEditor from './WallEditor';
 
-const MazeGenerator = ({ height, width, exits, showCreationProcess, extraWallProbability = 0 }) => {
+const MazeGenerator = ({ height, width, showCreationProcess, extraWallProbability = 0 }) => {
   const [maze, SetMaze] = useState([]);
   const [showButton, setShowButton] = useState(false);
   const [path1, setPath1] = useState([]);
   const [path2, setPath2] = useState([]);
-  const [exitCells, setExitCells] = useState([]);
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [lastSelectedCell, setLastSelectedCell] = useState(null);
   const [algorithm, setAlgorithm] = useState('BFS');
-  const { selectedCells, toggleCellSelection, addWall, removeWall, clearSelectedCells } = WallEditor(maze, SetMaze);
+  const [generationTime, setGenerationTime] = useState(0);
+  const [pathTimeBFS, setPathTimeBFS] = useState(0);
+  const [pathTimeDFS, setPathTimeDFS] = useState(0);
+  const { selectedCells, toggleCellSelection, clearSelectedCells } = WallEditor(maze, SetMaze);
   const cellSize = Math.min(Dimensions.get('window').width / width, Dimensions.get('window').height / height); 
   const shouldContinueRef = useRef(true);
 
   useEffect(() => {
     const newMaze = CreateGrid(width, height).map(row => row.map(cell => ({ ...cell, visited: false })));
     shouldContinueRef.current = true;
-    GenerateMaze(newMaze, exits, SetMaze, setExitCells, extraWallProbability, showCreationProcess, shouldContinueRef);
+    GenerateMaze(newMaze, SetMaze, extraWallProbability, showCreationProcess, shouldContinueRef, setGenerationTime);
     setShowButton(false);
     setPath1([]);
     setPath2([]);
     clearSelectedCells();
-  }, [height, width, exits, showCreationProcess, extraWallProbability]);
+  }, [height, width, showCreationProcess, extraWallProbability]);
 
   useEffect(() => {
-    setShowButton(selectedCells.length === 2 || (selectedCells.length === 1 && exits > 0) || exits === 2);
-  }, [selectedCells, exits]);
+    setShowButton(selectedCells.length === 2);
+  }, [selectedCells]);
 
   const handleShowPath = () => {
     shouldContinueRef.current = true;
-    const findPath = algorithm === 'BFS' ? findShortestPath : findShortestPathDFS;
-  
-    if (selectedCells.length === 2) {
-      findPath(selectedCells[0], selectedCells[1], maze, (path, visited) => {
+    if (algorithm === 'BFS') {
+      findShortestPath(selectedCells[0], selectedCells[1], maze, (path, visited) => {
         setPath1(path);
         updateMazeWithVisited(visited);
-      }, () => shouldContinueRef.current);
+      }, () => shouldContinueRef.current, setPathTimeBFS);
       setPath2([]);
-    } else if (selectedCells.length === 1 && exits > 0) {
-      if (exitCells.length > 0) {
-        findPath(selectedCells[0], exitCells[0], maze, (path, visited) => {
-          setPath1(path);
-          updateMazeWithVisited(visited);
-        }, () => shouldContinueRef.current);
-      }
-      if (exitCells.length > 1) {
-        findPath(selectedCells[0], exitCells[1], maze, (path, visited) => {
-          setPath2(path);
-          updateMazeWithVisited(visited);
-        }, () => shouldContinueRef.current);
-      }
-    } else if (exits === 2 && exitCells.length === 2) {
-      findPath(exitCells[0], exitCells[1], maze, (path, visited) => {
+    } else if (algorithm === 'DFS') {
+      findShortestPathDFS(selectedCells[0], selectedCells[1], maze, (path, visited) => {
         setPath1(path);
         updateMazeWithVisited(visited);
-      }, () => shouldContinueRef.current);
+      }, () => shouldContinueRef.current, setPathTimeDFS);
       setPath2([]);
+    } else if (algorithm === 'BOTH') {
+      findShortestPath(selectedCells[0], selectedCells[1], maze, (path, visited) => {
+        setPath1(path);
+        updateMazeWithVisited(visited);
+      }, () => shouldContinueRef.current, setPathTimeBFS);
+      
+      findShortestPathDFS(selectedCells[0], selectedCells[1], maze, (path, visited) => {
+        setPath2(path);
+        updateMazeWithVisited(visited);
+      }, () => shouldContinueRef.current, setPathTimeDFS);
     }
   };
 
@@ -106,10 +103,20 @@ const MazeGenerator = ({ height, width, exits, showCreationProcess, extraWallPro
       >
         <Picker.Item label="BFS" value="BFS" />
         <Picker.Item label="DFS" value="DFS" />
+        <Picker.Item label="BOTH" value="BOTH" />
       </Picker>
       <View style={{ opacity: showButton ? 1 : 0 }}>
         <Button title="Show Path" onPress={handleShowPath} />
       </View>
+      <Text>Generation Time: {generationTime} ms</Text>
+      {algorithm === 'BOTH' ? (
+        <>
+          <Text>BFS Pathfinding Time: {pathTimeBFS} ms</Text>
+          <Text>DFS Pathfinding Time: {pathTimeDFS} ms</Text>
+        </>
+      ) : (
+        <Text>Pathfinding Time: {algorithm === 'BFS' ? pathTimeBFS : pathTimeDFS} ms</Text>
+      )}
       {maze.map((row, rowIndex) => (
         <View key={rowIndex} style={styles.row}>
           {row.map((cell, cellIndex) => {

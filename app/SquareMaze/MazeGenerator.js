@@ -130,6 +130,12 @@ const MazeGenerator = ({ height, width, showCreationProcess, extraWallProbabilit
             const isCrossingPath = isPath1 && isPath2;
             const isVisited = cell.visited;
 
+            const backgroundColor = isSelected ? 'pink' :
+                                    isCrossingPath ? 'yellow' :
+                                    isPath1 ? 'lightgreen' :
+                                    isPath2 ? 'lightcoral' :
+                                    isVisited ? 'lightgray' : 'white';
+
             return (
               <TouchableOpacity
                 key={cellIndex}
@@ -142,7 +148,7 @@ const MazeGenerator = ({ height, width, showCreationProcess, extraWallProbabilit
                     borderLeftWidth: cell.walls[3] ? (isLeftCol ? outerBorderWidth : borderWidth) : 0,
                     width: cellSize,
                     height: cellSize,
-                    backgroundColor: isSelected ? 'pink' : isCrossingPath ? 'yellow' : isPath1 ? (algorithm === 'BFS' ? 'lightgreen' : 'lightcoral') : isPath2 ? 'lightblue' : isVisited ? 'lightgray' : 'white',
+                    backgroundColor: backgroundColor,
                   },
                 ]}
                 onPress={() => toggleCellSelection(cell, () => {

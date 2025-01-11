@@ -1,11 +1,12 @@
 import getNeighbors from './getNeighbors';
 
-const findShortestPathDFS = (start, end, maze, updateMaze, shouldContinue) => {
+const findShortestPathDFS = (start, end, maze, updateMaze, shouldContinue, setPathTime) => {
   return new Promise((resolve) => {
     const stack = [[start]];
     const visited = new Set();
     visited.add(`${start.x},${start.y}`);
     let shortestPath = null;
+    const startTime = Date.now();
 
     const step = () => {
       if (!shouldContinue()) {
@@ -22,6 +23,8 @@ const findShortestPathDFS = (start, end, maze, updateMaze, shouldContinue) => {
             shortestPath = path;
           }
           updateMaze(shortestPath, visited);
+          const endTime = Date.now();
+          setPathTime(endTime - startTime);
           resolve(shortestPath);
           return;
         }
